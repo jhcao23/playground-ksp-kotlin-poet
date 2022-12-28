@@ -68,11 +68,10 @@ class BuilderProcessor(
                     .addStatement("return ${targetClassName}($statements)")
                     .build()
             )
-            val fileOutput = codeGenerator.createNewFile(Dependencies(true, function.containingFile!!), packageName , className)
-
-            val fileSpec = fileSpecBuilder
-                .addType(typeSpecBuilder.build())
-                .build()
+            val fileOutput = codeGenerator.createNewFile(
+                Dependencies(true, function.containingFile!!), packageName , className
+            )
+            val fileSpec = fileSpecBuilder.addType(typeSpecBuilder.build()).build()
             fileOutput.appendText(fileSpec.toString())
             fileOutput.close()
 
