@@ -4,7 +4,7 @@ val javapoetVersion: String by project
 val kotlinpoetVersion: String by project
 
 plugins {
-    kotlin("jvm") version "1.7.22"
+    kotlin("jvm")
 }
 
 group = "technology.touchmars.ksp"
@@ -18,8 +18,4 @@ dependencies {
     implementation("com.squareup:kotlinpoet-ksp:$kotlinpoetVersion")
 
     testImplementation(kotlin("test"))
-}
-
-sourceSets.main {
-    java.srcDirs("src/main/kotlin")
 }
