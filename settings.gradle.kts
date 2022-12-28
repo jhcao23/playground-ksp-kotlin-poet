@@ -11,7 +11,6 @@ pluginManagement {
     }
 }
 
-rootProject.name = "axe-ksp"
+rootProject.name = "playground-ksp-kotlin-poet"
 include("test-processor")
-include("workload")
 include("workload")
