@@ -1,7 +1,11 @@
 package technology.touchmars.ksp
 
+import com.google.devtools.ksp.containingFile
 import com.google.devtools.ksp.processing.*
 import com.google.devtools.ksp.symbol.*
+import com.squareup.kotlinpoet.ClassName
+import com.squareup.kotlinpoet.asClassName
+import com.squareup.kotlinpoet.asTypeName
 
 import java.io.OutputStream
 
@@ -24,6 +28,19 @@ class TestProcessor(
             "technology.touchmars.ksp", "TestProcessor", "log")
         emit("technology.touchmars.ksp.TestProcessor: init($options)", "")
 
+        // Test second Annotation
+        val goodGuyNodes = resolver.getSymbolsWithAnnotation(GoodGuy::class.asClassName().canonicalName)
+        goodGuyNodes.forEach {
+            if (it is KSClassDeclaration)
+                emit("goodguy: ${it.containingFile?.filePath}", " ")
+            else if (it is KSFunctionDeclaration)
+                emit("goodguy fun: " +
+                        "${it.simpleName.asString()}::" +
+                        "${ClassName.bestGuess(it.returnType!!.resolve().declaration.qualifiedName!!.asString())}",
+                    " ")
+        }
+        // Test end
+
         val javaFile = codeGenerator.createNewFile(Dependencies(false),
             "", "Generated", "java")
         javaFile.appendText("class Generated {}")
@@ -37,9 +54,9 @@ class TestProcessor(
         val files = resolver.getAllFiles()
         emit("technology.touchmars.ksp.TestProcessor: process()", "")
         val visitor = TestVisitor()
-        for (file in files) {
-            emit("technology.touchmars.ksp.TestProcessor: processing ${file.fileName}", "")
-            file.accept(visitor, "")
+        for (f in files) {
+            emit("technology.touchmars.ksp.TestProcessor: processing ${f.fileName}", "")
+            f.accept(visitor, "")
         }
         invoked = true
         return emptyList()

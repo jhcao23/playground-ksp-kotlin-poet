@@ -6,7 +6,13 @@ import com.google.devtools.ksp.validate
 
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.FileSpec
+import java.io.IOException
 import java.io.OutputStream
+import kotlin.reflect.full.memberFunctions
+import kotlin.reflect.full.findAnnotation
+import kotlin.reflect.jvm.javaMethod
+import kotlin.reflect.jvm.kotlinFunction
+import kotlin.reflect.jvm.*
 
 fun OutputStream.appendText(str: String) {
     this.write(str.toByteArray())
@@ -16,13 +22,57 @@ class BuilderProcessor(
     val codeGenerator: CodeGenerator,
     val logger: KSPLogger
 ) : SymbolProcessor {
+
+    private var log: OutputStream = codeGenerator.createNewFile(
+        Dependencies(false),
+        "technology.touchmars.ksp", "BuilderProcessor", "log"
+    )
+    private var invoked = false
+    fun emit(s: String, indent: String = "") {
+        try {
+            log.appendText("$indent$s\n")
+        } catch (e: IOException) {
+            e.printStackTrace()
+            log.close()
+        }
+
+    }
     override fun process(resolver: Resolver): List<KSAnnotated> {
+        if (invoked) {
+            return emptyList()
+        }
+        // Test second Annotation
+        val builderClass = JavaBuilderProcessor::class
+        for (m in builderClass.memberFunctions) {
+            val srcElement = m::javaMethod.get()?.kotlinFunction ?: continue
+            emit(srcElement.toString())
+        }
+        emit("technology.touchmars.ksp.TestProcessor: init($options)", "")
+        val goodGuyNodes = resolver.getSymbolsWithAnnotation(GoodGuy::class.asClassName().canonicalName)
+        goodGuyNodes.forEach {
+            if (it is KSClassDeclaration)
+                emit("goodguy: ${it.containingFile?.filePath}")
+            else if (it is KSFunctionDeclaration)
+                emit("goodguy fun: " +
+                    "${it.simpleName.asString()}::" +
+                    "${ClassName.bestGuess(it.returnType!!.resolve().declaration.qualifiedName!!.asString())}"
+                )
+        }
+        emit("")
+        // Test end
+
         val pkgName = Builder::class.asClassName().canonicalName
         val symbols = resolver.getSymbolsWithAnnotation(pkgName)
         val ret = symbols.filter { !it.validate() }.toList()
         symbols
             .filter { it is KSClassDeclaration && it.validate() }
             .forEach { it.accept(BuilderVisitor(), Unit) }
+        if (ret.isEmpty()) {
+            invoked = true
+        } else {
+            emit("leftover: ${ret.size}")
+            emit(ClassName.bestGuess((ret[0] as KSClassDeclaration).qualifiedName!!.asString()).canonicalName)
+        }
         return ret
     }
 
@@ -42,7 +92,8 @@ class BuilderProcessor(
             val typeSpecBuilder = TypeSpec.classBuilder(className)
             parameters.forEach {
                 val pName = it.name!!.getShortName()
-                val pType = ClassName.bestGuess(it.type.resolve().declaration.qualifiedName!!.asString()).copy(true) // ClassName.bestGuess(it.type.toString()).copy(true)
+                val pType = ClassName.bestGuess(it.type.resolve().declaration.qualifiedName!!.asString())
+                    .copy(true)
                 typeSpecBuilder.addProperty(
                     PropertySpec.builder(pName, pType, KModifier.PRIVATE)
                         .mutable()
