@@ -1,5 +1,3 @@
 package technology.touchmars.ksp
 
-annotation class GoodGuy {
-
-}
+annotation class GoodGuy

@@ -1,4 +1,3 @@
 package technology.touchmars.ksp
 
-annotation class Builder {
-}
+annotation class Builder

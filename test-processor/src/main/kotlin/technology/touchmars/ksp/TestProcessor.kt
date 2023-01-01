@@ -1,12 +1,9 @@
 package technology.touchmars.ksp
 
-import com.google.devtools.ksp.containingFile
 import com.google.devtools.ksp.processing.*
 import com.google.devtools.ksp.symbol.*
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.asClassName
-import com.squareup.kotlinpoet.asTypeName
-
 import java.io.OutputStream
 
 class TestProcessor(
